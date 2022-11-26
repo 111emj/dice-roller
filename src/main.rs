@@ -93,11 +93,30 @@ fn reduce_expression(expression: &String) -> String{
 
         }
     );
+
+    regex_replace( // reduce addition
+        &mut exp,
+        r"(\d{1,}\+){1,}\d{1,}",
+        |x: &str|{
+            x
+                .split("+")
+                .map(|a|
+                    a
+                    .parse::<u16>()
+                    .unwrap()
+                )
+                .collect::<Vec<u16>>()
+                .iter()
+                .sum::<u16>()
+                .to_string()
+
+        }
+    );
     
     exp
 }
 
-fn regex_replace<F>(source: &mut String,regex: &str,mutation: F)
+fn regex_replace<F>(source: &mut String,regex: &str,mutation: F)// replaces all portions of text in source that match regex with output of mutation
 where F: Fn(&str) -> String{
 
     let mut overwrite = source.clone();
