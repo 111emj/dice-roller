@@ -6,7 +6,7 @@ use std::collections::LinkedList;
 use random_number::random;
 
 fn main() {
-    let args:Vec<String> = std::env::args().collect();
+    let args = std::env::args().collect::<Vec<String>>();
 
     for arg in &args[1..]{
         println!("{}: {}", arg, reduce_expression(arg));
@@ -24,29 +24,53 @@ fn reduce_expression(expression: &String) -> String{
         &mut exp,
         r"\([^\)]*[^\(]*\)",
         |x: &str|{
-                let y = x.strip_prefix("(")
-                    .expect("failed to mutate match")
+                let y = x
+                    .strip_prefix("(")
+                    .unwrap()
                     .strip_suffix(")")
-                    .expect("Failed to mutate match")
+                    .unwrap()
                     .to_string();
                 reduce_expression(&y)
         }
     );
 
-    regex_replace( // reduce simple rolls ex: 13d17
+    regex_replace( // expand dice roll expressions to their results
         &mut exp,
         r"\d*d\d*",
         |x: &str|{
             let (qt,ql) = x.split_once("d").unwrap();
-            roll_dice(
-                qt.parse::<u16>().unwrap_or(1),
-                ql.parse::<u16>().expect("unknown dice quality")
+            format!("{:?}",
+                roll_dice(
+                    qt.parse::<u16>()
+                        .unwrap_or(1),
+                    ql.parse::<u16>()
+                        .expect("unknown dice quality")
+                )
             )
-                .iter()
-                .sum::<u16>().to_string()
         }
     );
     
+    regex_replace( // reduce generic dice roll results to their sum
+        &mut exp,
+        r"\[.*\]",
+        |x: &str|{
+            x
+                .strip_prefix("[")
+                .unwrap()
+                .strip_suffix("]")
+                .unwrap()
+                .split(",")
+                .map(|string|
+                     string.trim()
+                     .parse::<u16>()
+                     .expect("list of rolls contained non-integer(u16) element(s)")
+                 )
+                .collect::<Vec<u16>>()
+                .iter()
+                .sum::<u16>()
+                .to_string()
+        }
+    );
     exp
 }
 
