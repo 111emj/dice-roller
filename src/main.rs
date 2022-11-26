@@ -19,46 +19,41 @@ fn _roll_die(sides: u16) -> u16{
 fn reduce_expression(expression: &String) -> String{
     let mut exp = expression.clone();
 
-    exp.replace_regex(
-            r"\([^\)]*[^\(]*\)",
-            |x: &str|{
-                    let y = x.strip_prefix("(")
-                        .expect("failed to mutate match")
-                        .strip_suffix(")")
-                        .expect("Failed to mutate match")
-                        .to_string();
-                    reduce_expression(&y)
-            }
-        );
+    regex_replace(
+        &mut exp,
+        r"\([^\)]*[^\(]*\)",
+        |x: &str|{
+                let y = x.strip_prefix("(")
+                    .expect("failed to mutate match")
+                    .strip_suffix(")")
+                    .expect("Failed to mutate match")
+                    .to_string();
+                reduce_expression(&y)
+        }
+    );
     
     exp
 }
 
-trait ReplaceRegex{
-    fn replace_regex<F>(&mut self, regex: &str, mutation: F)
-        where F: Fn(&str) -> String;
-}
-impl ReplaceRegex for String{
-    fn replace_regex<F>(&mut self,regex: &str,mutation: F)
-    where F: Fn(&str) -> String{
+fn regex_replace<F>(source: &mut String,regex: &str,mutation: F)
+where F: Fn(&str) -> String{
 
-        let mut overwrite = self.clone();
+    let mut overwrite = source.clone();
 
-        let mut matches: LinkedList<Match> = Regex::new(regex)
-            .expect("Invalid Regex")
-            .find_iter(&self)
-            .collect();
+    let mut matches: LinkedList<Match> = Regex::new(regex)
+        .expect("Invalid Regex")
+        .find_iter(&source)
+        .collect();
 
-        while matches.len()!=0{
-            let find = matches.pop_back().unwrap();
+    while matches.len()!=0{
+        let find = matches.pop_back().unwrap();
 
-            let mutation = mutation(find.as_str());
+        let mutation = mutation(find.as_str());
 
-            overwrite.replace_range(
-                find.start()..find.end(),
-                mutation.as_str());
-        }
-
-        *self = overwrite;
+        overwrite.replace_range(
+            find.start()..find.end(),
+            mutation.as_str());
     }
+
+    *source = overwrite;
 }
