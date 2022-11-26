@@ -1,13 +1,14 @@
-use regex::Regex;
+use regex::{
+    Regex,
+    Match,
+};
+use std::collections::LinkedList;
 
 fn main() {
     let args:Vec<String> = std::env::args().collect();
 
     for arg in &args[1..]{
-        match reduce_expression(arg){
-            Ok(result) => println!("{}: {}", arg, result),
-            Err(_) => println!("Failed to parse Expression '{}'",arg),
-        }
+        println!("{}: {}", arg, reduce_expression(arg));
     }
 }
 
@@ -15,10 +16,10 @@ fn _roll_die(sides: u16) -> u16{
     random_number::random!(1..sides)
 }
 
-fn reduce_expression(expression: &String) -> Result<u16,std::num::ParseIntError>{
+fn reduce_expression(expression: &String) -> String{
     let mut exp = expression.clone();
 
-    while exp.replace_regex(
+    exp.replace_regex(
             r"\([^\)]*[^\(]*\)",
             |x: &str|{
                 x.strip_prefix("(")
@@ -26,52 +27,36 @@ fn reduce_expression(expression: &String) -> Result<u16,std::num::ParseIntError>
                     .strip_suffix(")")
                     .expect("Failed to mutate match")
             }
-        ){}
+        );
     
-    exp.parse::<u16>()
+    exp
 }
 
 trait ReplaceRegex{
-    fn replace_regex<F>(&mut self, regex: &str, mutation: F) -> bool
+    fn replace_regex<F>(&mut self, regex: &str, mutation: F)
         where F: Fn(&str) -> &str;
 }
 impl ReplaceRegex for String{
-    fn replace_regex<F>(&mut self,regex: &str,mutation: F) -> bool
+    fn replace_regex<F>(&mut self,regex: &str,mutation: F)
     where F: Fn(&str) -> &str{
 
         let mut overwrite = self.clone();
 
-        let captures = Regex::new(regex)
+        let mut matches: LinkedList<Match> = Regex::new(regex)
             .expect("Invalid Regex")
-            .captures(&self);
-        println!("{:?}",captures);
+            .find_iter(&self)
+            .collect();
 
-        if captures.is_some(){
-            let captures = captures.unwrap();
-            let mut counter = captures.len()-1;
+        while matches.len()!=0{
+            let find = matches.pop_back().unwrap();
 
-            loop{
-                let capture = captures.get(counter)
-                    .expect(format!("failed to get capture {} of {:?}",counter,captures).as_str());
+            let mutation = mutation(find.as_str());
 
-                
-                let mutation = mutation(capture.as_str());
-
-                overwrite.replace_range(
-                    capture.start()..capture.end(),
-                    mutation);
-
-
-                if counter == 0 {break}
-                counter-=1;
-            }
-
-            *self = overwrite;
-            true
-        }
-        else{
-            false
+            overwrite.replace_range(
+                find.start()..find.end(),
+                mutation);
         }
 
+        *self = overwrite;
     }
 }
