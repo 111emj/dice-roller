@@ -71,6 +71,29 @@ fn reduce_expression(expression: &String) -> String{
                 .to_string()
         }
     );
+
+    regex_replace( // reduce multiplications
+        &mut exp,
+        r"(\d{1,}\*){1,}\d{1,}",
+        |x: &str|{
+            let mut prod = 1;
+            x
+                .split("*")
+                .map(|a|
+                    a
+                    .parse::<u16>()
+                    .unwrap()
+                )
+                .collect::<Vec<u16>>()
+                .iter()
+                .for_each(|a|
+                    prod*=a
+                );
+            prod.to_string()
+
+        }
+    );
+    
     exp
 }
 
