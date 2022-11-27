@@ -39,7 +39,7 @@ fn reduce_expression(expression: &String) -> String{
         r"\d*d\d*",
         |x: &str|{
             let (qt,ql) = x.split_once("d").unwrap();
-            format!("{:?}",
+            format!("{:?}s",
                 roll_dice(
                     qt.parse::<u16>()
                         .unwrap_or(1),
@@ -52,7 +52,7 @@ fn reduce_expression(expression: &String) -> String{
     
     regex_replace( // reduce generic dice roll results to their sum
         &mut exp,
-        r"\[.*\]",
+        r"\[.*\]s",
         |x: &str|{
             x
                 .strip_prefix("[")
@@ -91,6 +91,29 @@ fn reduce_expression(expression: &String) -> String{
         }
     );
 
+    regex_replace( // reduce division
+        &mut exp,
+        r"(\d{1,}/){1,}\d{1,}",
+        |x: &str|{
+            let mut list = x
+                .split("/")
+                .map(|a|
+                    a
+                    .parse::<u16>()
+                    .unwrap()
+                )
+                .collect::<LinkedList<u16>>();
+            let dividend = list
+                .pop_front()
+                .unwrap();
+            (dividend/list
+                .iter()
+                .product::<u16>()
+                )
+                .to_string()
+        }
+    );
+
     regex_replace( // reduce addition
         &mut exp,
         r"(\d{1,}\+){1,}\d{1,}",
@@ -122,6 +145,7 @@ where F: Fn(&str) -> String{
         .expect("Invalid Regex")
         .find_iter(&source)
         .collect();
+    // println!("{:?}",matches);
 
     while matches.len()!=0{
         let find = matches.pop_back().unwrap();
