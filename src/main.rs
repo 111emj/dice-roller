@@ -39,7 +39,7 @@ fn reduce_expression(expression: &String) -> String{
         r"\d*d\d*",
         |x: &str|{
             let (qt,ql) = x.split_once("d").unwrap();
-            format!("{:?}s",
+            format!("{:?}",
                 roll_dice(
                     qt.parse::<u16>()
                         .unwrap_or(1),
@@ -52,7 +52,7 @@ fn reduce_expression(expression: &String) -> String{
     
     regex_replace( // reduce generic dice roll results to their sum
         &mut exp,
-        r"\[.*\]s",
+        r"\[.*\]",
         |x: &str|{
             x
                 .strip_prefix("[")
@@ -75,7 +75,7 @@ fn reduce_expression(expression: &String) -> String{
     regex_replace( // reduce multiplications
         &mut exp,
         r"(\d{1,}\*){1,}\d{1,}",
-        |x: &str|{
+        |x: &str|
             x
                 .split("*")
                 .map(|a|
@@ -87,8 +87,6 @@ fn reduce_expression(expression: &String) -> String{
                 .iter()
                 .product::<u16>()
                 .to_string()
-
-        }
     );
 
     regex_replace( // reduce division
