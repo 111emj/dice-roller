@@ -130,6 +130,23 @@ fn reduce_expression(expression: &String) -> String{
 
         }
     );
+
+    regex_replace( // reduce subtraction
+        &mut exp,
+        r"(\d{1,}-){1,}\d{1,}",
+        |x: &str|{
+            let mut list = x
+                .split("-")
+                .map(|a|
+                    a
+                    .parse::<u16>()
+                    .unwrap()
+                )
+                .collect::<LinkedList<u16>>();
+            (list.pop_front().unwrap()-list.iter().sum::<u16>()).to_string()
+
+        }
+    );
     
     exp
 }
