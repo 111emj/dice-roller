@@ -49,10 +49,54 @@ fn reduce_expression(expression: &String) -> String{
             )
         }
     );
+
+    regex_replace( // sort dice roll results by increasing size (if necessary)
+        &mut exp,
+        r"\[[^]]*]\^",
+        |x: &str|{
+            let mut list = x
+                .strip_prefix("[")
+                .unwrap()
+                .strip_suffix("]^")
+                .unwrap()
+                .split(",")
+                .map(|a|{
+                    a
+                        .trim()
+                        .parse::<u16>()
+                        .unwrap()
+                })
+                .collect::<Vec<u16>>();
+            list.sort_unstable();
+            format!("{:?}",list)
+        }
+    );
     
+    regex_replace( // sort dice roll results by increasing size (if necessary)
+        &mut exp,
+        r"\[[^]]*]_",
+        |x: &str|{
+            let mut list = x
+                .strip_prefix("[")
+                .unwrap()
+                .strip_suffix("]_")
+                .unwrap()
+                .split(",")
+                .map(|a|{
+                    a
+                        .trim()
+                        .parse::<u16>()
+                        .unwrap()
+                })
+                .collect::<Vec<u16>>();
+            list.sort_unstable_by(|a,b|a.cmp(b).reverse());
+            format!("{:?}",list)
+        }
+    );
+
     regex_replace( // reduce generic dice roll results to their sum
         &mut exp,
-        r"\[.*\]",
+        r"\[[^]]*]",
         |x: &str|{
             x
                 .strip_prefix("[")
@@ -172,5 +216,6 @@ where F: Fn(&str) -> String{
             mutation.as_str());
     }
 
+    println!("{}",overwrite);
     *source = overwrite;
 }
