@@ -14,7 +14,7 @@ fn main() {
 }
 
 fn roll_dice(quantity: u16, quality: u16) -> LinkedList<u16>{
-    (0..quantity).map(|_|random!(1..quality)).collect()
+    (0..quantity).map(|_|random!(1..quality+1)).collect()
 }
 
 fn reduce_expression(expression: &String) -> String{
@@ -52,12 +52,12 @@ fn reduce_expression(expression: &String) -> String{
 
     regex_replace( // sort dice roll results by increasing size (if necessary)
         &mut exp,
-        r"\[[^]]*]\^",
+        r"\[[^]]*]_",
         |x: &str|{
             let mut list = x
                 .strip_prefix("[")
                 .unwrap()
-                .strip_suffix("]^")
+                .strip_suffix("]_")
                 .unwrap()
                 .split(",")
                 .map(|a|{
@@ -72,14 +72,14 @@ fn reduce_expression(expression: &String) -> String{
         }
     );
     
-    regex_replace( // sort dice roll results by increasing size (if necessary)
+    regex_replace( // sort dice roll results by decreasing size (if necessary)
         &mut exp,
-        r"\[[^]]*]_",
+        r"\[[^]]*]\^",
         |x: &str|{
             let mut list = x
                 .strip_prefix("[")
                 .unwrap()
-                .strip_suffix("]_")
+                .strip_suffix("]^")
                 .unwrap()
                 .split(",")
                 .map(|a|{
@@ -96,8 +96,40 @@ fn reduce_expression(expression: &String) -> String{
 
     regex_replace( // reduce generic dice roll results to their sum
         &mut exp,
-        r"\[[^]]*]",
+        r"\[[^]]*]\d{1,}",
         |x: &str|{
+            let len = x.split_once("]").unwrap().1.parse::<usize>().unwrap();
+            let mut list = x
+                .strip_prefix("[")
+                .unwrap()
+                .strip_suffix(format!("]{}",len).as_str())
+                .unwrap()
+                .split(",")
+                .map(|a|a
+                     .trim()
+                     .parse::<u16>()
+                     .unwrap()
+                )
+                .collect::<LinkedList<u16>>();
+            let mut out: LinkedList<u16> = LinkedList::new();
+            
+            for _ in 0..len{
+                match list.pop_front(){
+                    Some(val) => {
+                        out.push_back(val)
+                    }
+                    None => {break;}
+                }
+            }
+           
+            format!("{:?}",out)
+        }
+    );
+
+    regex_replace( // reduce generic dice roll results to their sum
+        &mut exp,
+        r"\[[^]]*]",
+        |x: &str|
             x
                 .strip_prefix("[")
                 .unwrap()
@@ -113,7 +145,6 @@ fn reduce_expression(expression: &String) -> String{
                 .iter()
                 .sum::<u16>()
                 .to_string()
-        }
     );
 
     regex_replace( // reduce multiplications
@@ -159,7 +190,7 @@ fn reduce_expression(expression: &String) -> String{
     regex_replace( // reduce addition
         &mut exp,
         r"(\d{1,}\+){1,}\d{1,}",
-        |x: &str|{
+        |x: &str|
             x
                 .split("+")
                 .map(|a|
@@ -171,8 +202,6 @@ fn reduce_expression(expression: &String) -> String{
                 .iter()
                 .sum::<u16>()
                 .to_string()
-
-        }
     );
 
     regex_replace( // reduce subtraction
