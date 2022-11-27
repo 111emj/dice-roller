@@ -12,20 +12,77 @@ fn main() {
     let args = std::env::args().collect::<Vec<String>>();
     if args.len()>1{
         for arg in &args[1..]{
-            println!("{}: {}", arg, reduce_expression(arg));
+            let mut arg = arg.clone();
+            arg.retain(|c|!c.is_whitespace());
+            match arg
+                    .split_once("x"){
+                Some(repetitions_expression) =>{
+                    match repetitions_expression
+                            .0
+                            .trim()
+                            .parse::<u16>(){
+                        Ok(val) =>{
+                            for _ in 0..val{
+                                println!("{}: {}", 
+                                     repetitions_expression.1,
+                                     reduce_expression(&repetitions_expression
+                                       .1
+                                       .to_string()));
+                            }
+                        },
+                        Err(_) =>{
+                            println!("{}: {}",arg, reduce_expression(&arg));
+                        }
+                    }
+                },
+                None =>{
+                    println!("{}: {}",arg, reduce_expression(&arg));
+                }
+            }
         }
     }
     else {
         loop{
+            // read input into a string and remove whitespace
             let mut line = String::new();
-            stdin().read_line(&mut line).expect("Failed to Access Input Stream");
-            line = line.trim().to_string();
+            stdin()
+                .read_line(&mut line)
+                .expect("Failed to Access Input Stream");
+            line.retain(|c|!c.is_whitespace());
 
-            if line.to_lowercase()=="quit".to_string(){
-                break
+            // check for specifictaion of expression repetition and execute it if required
+            match line
+                    .split_once("x"){
+                Some(repetitions_expression) =>{
+                    match repetitions_expression
+                            .0
+                            .trim()
+                            .parse::<u16>(){
+                        Ok(val) =>{
+                            for _ in 0..val{
+                                println!(": {}", 
+                                     reduce_expression(&repetitions_expression
+                                       .1
+                                       .to_string()));
+                            }
+                        },
+                        Err(_) =>{
+                            println!(": {}", reduce_expression(&line));
+                        }
+                    }
+                },
+                None =>{
+                    if line
+                            .to_lowercase()
+                            .starts_with("q"){
+                        break;
+                    }
+
+                    println!(": {}", reduce_expression(&line));
+                }
             }
 
-            println!("{}: {}", &line, reduce_expression(&line));
+
         }
     }
 }
