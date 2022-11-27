@@ -7,7 +7,7 @@
 - anything inside parentheses will be reduced first
 - prefacing an expression with [n]x will repeat the expression n times
 
-# To-Do
+## To-Do
 - implement rerolling of specified die values
 - allow for indexing sorted dice rolls
 - iterate over dice rolls
