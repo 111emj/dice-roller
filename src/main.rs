@@ -76,7 +76,6 @@ fn reduce_expression(expression: &String) -> String{
         &mut exp,
         r"(\d{1,}\*){1,}\d{1,}",
         |x: &str|{
-            let mut prod = 1;
             x
                 .split("*")
                 .map(|a|
@@ -86,10 +85,8 @@ fn reduce_expression(expression: &String) -> String{
                 )
                 .collect::<Vec<u16>>()
                 .iter()
-                .for_each(|a|
-                    prod*=a
-                );
-            prod.to_string()
+                .product::<u16>()
+                .to_string()
 
         }
     );
