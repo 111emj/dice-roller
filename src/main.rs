@@ -2,14 +2,31 @@ use regex::{
     Regex,
     Match,
 };
-use std::collections::LinkedList;
+use std::{
+    collections::LinkedList,
+    io::stdin,
+};
 use random_number::random;
 
 fn main() {
     let args = std::env::args().collect::<Vec<String>>();
+    if args.len()>1{
+        for arg in &args[1..]{
+            println!("{}: {}", arg, reduce_expression(arg));
+        }
+    }
+    else {
+        loop{
+            let mut line = String::new();
+            stdin().read_line(&mut line).expect("Failed to Access Input Stream");
+            line = line.trim().to_string();
 
-    for arg in &args[1..]{
-        println!("{}: {}", arg, reduce_expression(arg));
+            if line.to_lowercase()=="quit".to_string(){
+                break
+            }
+
+            println!("{}: {}", &line, reduce_expression(&line));
+        }
     }
 }
 
@@ -245,6 +262,6 @@ where F: Fn(&str) -> String{
             mutation.as_str());
     }
 
-    println!("{}",overwrite);
+    // println!("{}",overwrite);
     *source = overwrite;
 }
