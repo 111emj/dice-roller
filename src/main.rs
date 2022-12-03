@@ -124,81 +124,88 @@ fn reduce_expression(expression: &String) -> String{
         }
     );
 
-    regex_replace( // sort dice roll results by increasing size (if necessary)
-        &mut exp,
-        r"\[[^]]*]_",
-        |x: &str|{
-            let mut list = x
-                .strip_prefix("[")
-                .unwrap()
-                .strip_suffix("]_")
-                .unwrap()
-                .split(",")
-                .map(|a|{
-                    a
-                        .trim()
-                        .parse::<u16>()
-                        .unwrap()
-                })
-                .collect::<Vec<u16>>();
-            list.sort_unstable();
-            format!("{:?}",list)
-        }
-    );
-    
-    regex_replace( // sort dice roll results by decreasing size (if necessary)
-        &mut exp,
-        r"\[[^]]*]\^",
-        |x: &str|{
-            let mut list = x
-                .strip_prefix("[")
-                .unwrap()
-                .strip_suffix("]^")
-                .unwrap()
-                .split(",")
-                .map(|a|{
-                    a
-                        .trim()
-                        .parse::<u16>()
-                        .unwrap()
-                })
-                .collect::<Vec<u16>>();
-            list.sort_unstable_by(|a,b|a.cmp(b).reverse());
-            format!("{:?}",list)
-        }
-    );
-
-    regex_replace( // reduce generic dice roll results to their sum
-        &mut exp,
-        r"\[[^]]*]\d{1,}",
-        |x: &str|{
-            let len = x.split_once("]").unwrap().1.parse::<usize>().unwrap();
-            let mut list = x
-                .strip_prefix("[")
-                .unwrap()
-                .strip_suffix(format!("]{}",len).as_str())
-                .unwrap()
-                .split(",")
-                .map(|a|a
-                     .trim()
-                     .parse::<u16>()
-                     .unwrap()
-                )
-                .collect::<LinkedList<u16>>();
-            let mut out: LinkedList<u16> = LinkedList::new();
-            
-            for _ in 0..len{
-                match list.pop_front(){
-                    Some(val) => {
-                        out.push_back(val)
-                    }
-                    None => {break;}
-                }
+    while 0 != Regex::new(r"\[.*][_\^\d]")
+            .unwrap()
+            .find_iter(&exp)
+            .collect::<Vec<Match>>()
+            .len(){
+        regex_replace( // sort dice roll results by increasing size (if necessary)
+            &mut exp,
+            r"\[[^]]*]_",
+            |x: &str|{
+                let mut list = x
+                    .strip_prefix("[")
+                    .unwrap()
+                    .strip_suffix("]_")
+                    .unwrap()
+                    .split(",")
+                    .map(|a|{
+                        a
+                            .trim()
+                            .parse::<u16>()
+                            .unwrap()
+                    })
+                    .collect::<Vec<u16>>();
+                list.sort_unstable();
+                format!("{:?}",list)
             }
-           
-            format!("{:?}",out)
-        }
-    );
+        );
+        
+        regex_replace( // sort dice roll results by decreasing size (if necessary)
+            &mut exp,
+            r"\[[^]]*]\^",
+            |x: &str|{
+                let mut list = x
+                    .strip_prefix("[")
+                    .unwrap()
+                    .strip_suffix("]^")
+                    .unwrap()
+                    .split(",")
+                    .map(|a|{
+                        a
+                            .trim()
+                            .parse::<u16>()
+                            .unwrap()
+                    })
+                    .collect::<Vec<u16>>();
+                list.sort_unstable_by(|a,b|a.cmp(b).reverse());
+                format!("{:?}",list)
+            }
+        );
+
+        regex_replace( // truncate dice roll list to this specified size
+            &mut exp,
+            r"\[[^]]*]\d{1,}",
+            |x: &str|{
+                let len = x.split_once("]").unwrap().1.parse::<usize>().unwrap();
+                let mut list = x
+                    .strip_prefix("[")
+                    .unwrap()
+                    .strip_suffix(format!("]{}",len).as_str())
+                    .unwrap()
+                    .split(",")
+                    .map(|a|a
+                         .trim()
+                         .parse::<u16>()
+                         .unwrap()
+                    )
+                    .collect::<LinkedList<u16>>();
+                let mut out: LinkedList<u16> = LinkedList::new();
+                
+                for _ in 0..len{
+                    match list.pop_front(){
+                        Some(val) => {
+                            out.push_back(val)
+                        }
+                        None => {break;}
+                    }
+                }
+               
+                format!("{:?}",out)
+            }
+        );    
+    }
+    
 
     regex_replace( // reduce generic dice roll results to their sum
         &mut exp,
@@ -319,6 +326,6 @@ where F: Fn(&str) -> String{
             mutation.as_str());
     }
 
-    // println!("{}",overwrite);
+    println!("{}",overwrite);
     *source = overwrite;
 }
