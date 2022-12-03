@@ -204,6 +204,44 @@ fn reduce_expression(expression: &String) -> String{
                 format!("{:?}",out)
             }
         );    
+
+        regex_replace( // keep only specified indeces of roll
+            &mut exp,
+            r"\[[^]]*]\{(\d{1,},)*\d{1,}}",
+            |x|{
+                let (rolls,indeces) = x.split_once("]{").unwrap();
+                let rolls = rolls
+                    .strip_prefix("[")
+                    .unwrap()
+                    .split(",")
+                    .map(|roll|
+                         roll
+                         .trim()
+                         .parse::<u16>()
+                         .unwrap()
+                         )
+                    .collect::<Vec<u16>>();
+                let indeces = indeces
+                    .strip_suffix("}")
+                    .unwrap()
+                    .split(",")
+                    .map(|index|
+                         index
+                         .trim()
+                         .parse::<u16>()
+                         .unwrap()
+                         -1
+                         )
+                    .collect::<Vec<u16>>();
+                let mut new_rolls: Vec<u16> = Vec::new();
+                for (roll,index) in rolls.iter().zip(0..){
+                    if indeces.contains(&index){
+                        new_rolls.push(roll.clone());
+                    }
+                }
+                format!("{:?}",new_rolls)
+            }
+        );
     }
     
 
