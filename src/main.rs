@@ -10,79 +10,52 @@ use random_number::random;
 
 fn main() {
     let args = std::env::args().collect::<Vec<String>>();
-    if args.len()>1{
-        for arg in &args[1..]{
-            let mut arg = arg.clone();
-            arg.retain(|c|!c.is_whitespace());
-            match arg
-                    .split_once("x"){
-                Some(repetitions_expression) =>{
-                    match repetitions_expression
-                            .0
-                            .trim()
-                            .parse::<u16>(){
-                        Ok(val) =>{
-                            for _ in 0..val{
-                                println!("{}: {}", 
-                                     repetitions_expression.1,
-                                     reduce_expression(&repetitions_expression
-                                       .1
-                                       .to_string()));
-                            }
-                        },
-                        Err(_) =>{
-                            println!("{}: {}",arg, reduce_expression(&arg));
-                        }
+    if args.len()>1{ // run once for each argument
+        for arg in args.iter(){
+            let arg = arg.chars()
+                .filter(|x| !x.is_whitespace())
+                .collect::<String>();
+            match arg.split_once("x"){
+                None => println!("{}: {}",arg, reduce_expression(&arg)),
+                Some(expression) =>{
+                    println!("{}",arg);
+                    for _ in 0..
+                            expression.0
+                            .parse::<u16>()
+                            .unwrap_or(1){
+                        println!(": {}", reduce_expression(&expression.1.to_string()))
                     }
-                },
-                None =>{
-                    println!("{}: {}",arg, reduce_expression(&arg));
                 }
             }
         }
     }
-    else {
+    else { // if no arguments provided run in interactive mode
         loop{
             // read input into a string and remove whitespace
             let mut line = String::new();
             stdin()
                 .read_line(&mut line)
                 .expect("Failed to Access Input Stream");
-            line.retain(|c|!c.is_whitespace());
+            let line = line.chars()
+                .filter(|x| !x.is_whitespace())
+                .collect::<String>();
 
-            // check for specifictaion of expression repetition and execute it if required
-            match line
-                    .split_once("x"){
-                Some(repetitions_expression) =>{
-                    match repetitions_expression
-                            .0
-                            .trim()
-                            .parse::<u16>(){
-                        Ok(val) =>{
-                            for _ in 0..val{
-                                println!(": {}", 
-                                     reduce_expression(&repetitions_expression
-                                       .1
-                                       .to_string()));
-                            }
-                        },
-                        Err(_) =>{
-                            println!(": {}", reduce_expression(&line));
-                        }
-                    }
-                },
-                None =>{
-                    if line
-                            .to_lowercase()
-                            .starts_with("q"){
-                        break;
-                    }
-
-                    println!(": {}", reduce_expression(&line));
-                }
+            if line.starts_with("q") {
+                break;
             }
 
-
+            // check for specifictaion of expression repetition and execute it if required
+            match line.split_once("x"){
+                None => println!(": {}", reduce_expression(&line)),
+                Some(expression) =>{
+                    for _ in 0..
+                            expression.0
+                            .parse::<u16>()
+                            .unwrap_or(1){
+                        println!(": {}", reduce_expression(&expression.1.to_string()))
+                    }
+                }
+            }
         }
     }
 }
@@ -110,21 +83,21 @@ fn reduce_expression(expression: &String) -> String{
 
     regex_replace( // expand dice roll expressions to their results
         &mut exp,
-        r"\d*d\d*",
+        r"\d*d\d{1,}",
         |x: &str|{
             let (qt,ql) = x.split_once("d").unwrap();
-            format!("{:?}",
-                roll_dice(
-                    qt.parse::<u16>()
-                        .unwrap_or(1),
-                    ql.parse::<u16>()
-                        .expect("unknown dice quality")
-                )
-            )
+            let qt = qt
+                .parse::<u16>()
+                .unwrap_or(1);
+            let ql = ql
+                .parse::<u16>()
+                .unwrap();
+
+            format!("{:?}",roll_dice(qt,ql))
         }
     );
 
-    while 0 != Regex::new(r"\[.*][_\^\d]")
+    while 0 != Regex::new(r"\[.*][_\^\d]") // loop sorting and indexing expressions
             .unwrap()
             .find_iter(&exp)
             .collect::<Vec<Match>>()
@@ -139,12 +112,12 @@ fn reduce_expression(expression: &String) -> String{
                     .strip_suffix("]_")
                     .unwrap()
                     .split(",")
-                    .map(|a|{
+                    .map(|a|
                         a
                             .trim()
                             .parse::<u16>()
                             .unwrap()
-                    })
+                        )
                     .collect::<Vec<u16>>();
                 list.sort_unstable();
                 format!("{:?}",list)
@@ -161,12 +134,12 @@ fn reduce_expression(expression: &String) -> String{
                     .strip_suffix("]^")
                     .unwrap()
                     .split(",")
-                    .map(|a|{
+                    .map(|a|
                         a
                             .trim()
                             .parse::<u16>()
                             .unwrap()
-                    })
+                        )
                     .collect::<Vec<u16>>();
                 list.sort_unstable_by(|a,b|a.cmp(b).reverse());
                 format!("{:?}",list)
@@ -177,31 +150,26 @@ fn reduce_expression(expression: &String) -> String{
             &mut exp,
             r"\[[^]]*]\d{1,}",
             |x: &str|{
-                let len = x.split_once("]").unwrap().1.parse::<usize>().unwrap();
-                let mut list = x
+                let (list, len) = x.split_once("]").unwrap();
+
+                let len = len.parse::<usize>().unwrap();
+                let list = list
                     .strip_prefix("[")
-                    .unwrap()
-                    .strip_suffix(format!("]{}",len).as_str())
                     .unwrap()
                     .split(",")
                     .map(|a|a
                          .trim()
                          .parse::<u16>()
                          .unwrap()
-                    )
+                        )
                     .collect::<LinkedList<u16>>();
-                let mut out: LinkedList<u16> = LinkedList::new();
-                
-                for _ in 0..len{
-                    match list.pop_front(){
-                        Some(val) => {
-                            out.push_back(val)
-                        }
-                        None => {break;}
-                    }
-                }
-               
-                format!("{:?}",out)
+
+                format!("{:?}",
+                        list.iter()
+                            .zip(0..len)
+                            .map(|x|x.0)
+                            .collect::<LinkedList<&u16>>()
+                        )
             }
         );    
 
