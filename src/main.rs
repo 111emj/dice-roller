@@ -93,7 +93,7 @@ fn reduce_expression(expression: &String) -> String{
                 .parse::<u16>()
                 .unwrap();
 
-            format!("{:?}",roll_dice(qt,ql))
+            format!("{}:{:?}",ql,roll_dice(qt,ql))
         }
     );
 
@@ -215,11 +215,12 @@ fn reduce_expression(expression: &String) -> String{
 
     regex_replace( // reduce generic dice roll results to their sum
         &mut exp,
-        r"\[[^]]*]",
+        r"\d*:\[[^]]*]",
         |x: &str|
             x
-                .strip_prefix("[")
+                .split_once(":[")
                 .unwrap()
+                .1
                 .strip_suffix("]")
                 .unwrap()
                 .split(",")
