@@ -7,7 +7,7 @@
 - anything inside parentheses will be reduced first
 - prefacing an expression with [n]x will repeat the expression n times
 - dice rolls can be indexed by placing a list of numbers inside curly-brackets after the die or sort expression.
+- dice rolls can be specified to reroll values by appending rr[n] after the expression to reroll any rolls matching n
 
 ## To-Do
-- implement rerolling of specified die values
 - iterate over dice rolls

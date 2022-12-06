@@ -97,7 +97,7 @@ fn reduce_expression(expression: &String) -> String{
         }
     );
 
-    while 0 != Regex::new(r"\[.*][_\^\d]") // loop sorting and indexing expressions
+    while 0 != Regex::new(r"\[.*][_\^\d(rr)]") // loop sorting and indexing expressions
             .unwrap()
             .find_iter(&exp)
             .collect::<Vec<Match>>()
@@ -210,12 +210,46 @@ fn reduce_expression(expression: &String) -> String{
                 format!("{:?}",new_rolls)
             }
         );
+        regex_replace( // reroll specified values
+            &mut exp,
+            r"\d{1,}:\[[^]]*]rr\d{1,}",
+            |x|{
+                let (ql, leftover) = x
+                    .split_once(":[")
+                    .unwrap();
+                let (leftover, reroll_value) = leftover
+                    .split_once("]rr")
+                    .unwrap();
+                let ql = ql.parse::<u16>().unwrap();
+                let list = leftover
+                    .split(",")
+                    .map(|string|{
+                        let num_string = string.trim();
+                        if num_string==reroll_value {
+                            roll_dice(1,ql)
+                                .pop_front()
+                                .unwrap()
+                                .to_string()
+                                .parse::<u16>()
+                                .unwrap()
+                        }
+                        else{
+                            num_string
+                                .to_string()
+                                .parse::<u16>()
+                                .unwrap()
+                        }
+                    })
+                    .collect::<Vec<u16>>();
+                 format!("{}:{:?}",ql,list)
+            }
+        )
     }
     
 
     regex_replace( // reduce generic dice roll results to their sum
         &mut exp,
-        r"\d*:\[[^]]*]",
+        r"\d{1,}:\[[^]]*]",
         |x: &str|
             x
                 .split_once(":[")
