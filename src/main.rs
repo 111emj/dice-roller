@@ -11,7 +11,7 @@ use random_number::random;
 fn main() {
     let args = std::env::args().collect::<Vec<String>>();
     if args.len()>1{ // run once for each argument
-        for arg in args.iter(){
+        for arg in args[1..].iter(){
             let arg = arg.chars()
                 .filter(|x| !x.is_whitespace())
                 .collect::<String>();
