@@ -10,13 +10,15 @@ use random_number::random;
 
 fn main() {
     let args = std::env::args().collect::<Vec<String>>();
+
     if args.len()>1{ // run once for each argument
         for arg in args[1..].iter(){
-            let arg = arg.chars()
-                .filter(|x| !x.is_whitespace())
-                .collect::<String>();
-            match arg.split_once("x"){
+            match arg.chars()
+                    .filter(|x| !x.is_whitespace())
+                    .collect::<String>()
+                    .split_once("x"){
                 None => println!("{}: {}",arg, reduce_expression(&arg)),
+
                 Some(expression) =>{
                     println!("{}",arg);
                     for _ in 0..
@@ -67,7 +69,7 @@ fn roll_dice(quantity: u16, quality: u16) -> LinkedList<u16>{
 fn reduce_expression(expression: &String) -> String{
     let mut exp = expression.clone();
 
-    regex_replace( // reduce parentheses and recur inside of each set
+    regex_replace( // reduce parentheses and recur inside of each set of them
         &mut exp,
         r"\([^\)]*[^\(]*\)",
         |x: &str|{
@@ -346,8 +348,9 @@ fn reduce_expression(expression: &String) -> String{
     exp
 }
 
-fn regex_replace<F>(source: &mut String,regex: &str,mutation: F)// replaces all portions of text in source that match regex with output of mutation
-where F: Fn(&str) -> String{
+fn regex_replace<F>(source: &mut String,regex: &str,mutation: F)
+        where F: Fn(&str) -> String{
+    // replaces all portions of text in source that match regex with output of mutation
 
     let mut overwrite = source.clone();
 
@@ -355,7 +358,6 @@ where F: Fn(&str) -> String{
         .expect("Invalid Regex")
         .find_iter(&source)
         .collect();
-    // println!("{:?}",matches);
 
     while matches.len()!=0{
         let find = matches.pop_back().unwrap();
